@@ -1,0 +1,16 @@
+[project]
+name = "agentic-coding-assistant"
+version = "0.1.0"
+description = "에이전틱 코딩 프로세스를 가이드하는 개인 어시스턴트 봇"
+requires-python = ">=3.10"
+dependencies = [
+    "rich>=13.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+acb = "acb.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"

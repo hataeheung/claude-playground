@@ -1,0 +1,27 @@
+# Session Report: {{task_name}}
+
+## Summary
+- **Created**: {{created_at}}
+- **Phase**: {{current_phase}}
+- **Status**: {{status}}
+
+## Requirements (ANALYZE)
+{{analyze_notes}}
+
+## Codebase Context (EXPLORE)
+{{explore_notes}}
+
+## Implementation Plan (PLAN)
+{{plan_notes}}
+
+### Tasks
+{{tasks}}
+
+## Changes Made (IMPLEMENT)
+{{implement_notes}}
+
+## Verification (VERIFY)
+{{verify_notes}}
+
+## Delivery (DELIVER)
+{{deliver_notes}}
