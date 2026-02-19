@@ -1,13 +1,12 @@
 """Rich 기반 터미널 UI 출력"""
 
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.columns import Columns
-from rich.markdown import Markdown
 
-from acb.process import Phase, PHASE_INFO, PHASE_ORDER, Session
+from acb.process import PHASE_INFO, PHASE_ORDER, Phase, Session
 
 console = Console()
 
@@ -62,7 +61,7 @@ def show_phase_progress(session: Session):
             style = f"dim {color}"
         else:
             marker = "   "
-            style = f"dim"
+            style = "dim"
 
         progress_text = f"{p['checked']}/{p['total']}"
         table.add_row(
@@ -228,7 +227,7 @@ def show_export(session: Session):
     """세션을 마크다운 형식으로 출력"""
     lines = []
     lines.append(f"# {session.task_name}")
-    lines.append(f"")
+    lines.append("")
     lines.append(f"- Created: {session.created_at[:16]}")
     lines.append(f"- Updated: {session.updated_at[:16]}")
     lines.append(f"- Current Phase: {session.current_phase.value.upper()}")
