@@ -2,19 +2,107 @@
 
 import sys
 
-from acb.process import Phase, PHASE_ORDER, Session, SessionStore
 from acb.display import (
     console,
     show_banner,
-    show_phase_progress,
-    show_current_phase,
     show_checklist,
-    show_notes,
-    show_tasks,
-    show_help,
-    show_guide,
+    show_current_phase,
     show_export,
+    show_guide,
+    show_help,
+    show_notes,
+    show_phase_progress,
+    show_tasks,
 )
+from acb.process import PHASE_ORDER, Session, SessionStore
+
+
+def run_auto_mode(args: list[str]):
+    """자율 에이전트 모드 실행
+
+    사용법:
+        acb auto "사용자 인증 API 구현"
+        acb auto --no-confirm "버그 수정: 로그인 실패"
+        acb auto --no-push --no-pr "리팩토링: 코드 정리"
+        acb auto init  (설정 초기화)
+    """
+    from acb.config import load_config, save_config
+
+    config = load_config()
+
+    if not args:
+        console.print("[red]사용법: acb auto <요구사항>[/red]")
+        console.print("[dim]예: acb auto \"사용자 인증 API 구현\"[/dim]")
+        console.print("[dim]    acb auto init  (설정 초기화)[/dim]")
+        sys.exit(1)
+
+    # 설정 초기화 명령
+    if args[0] == "init":
+        _init_config(config)
+        save_config(config)
+        console.print("[green]설정이 저장되었습니다.[/green]")
+        return
+
+    # 옵션 파싱
+    requirement_parts = []
+    for arg in args:
+        if arg == "--no-confirm":
+            config.require_confirmation = False
+        elif arg == "--no-push":
+            config.auto_push = False
+        elif arg == "--no-pr":
+            config.auto_pr = False
+        elif arg == "--no-commit":
+            config.auto_commit = False
+        elif arg == "--deploy":
+            config.auto_deploy = True
+        else:
+            requirement_parts.append(arg)
+
+    requirement = " ".join(requirement_parts)
+    if not requirement:
+        console.print("[red]요구사항을 입력해주세요.[/red]")
+        sys.exit(1)
+
+    # 에이전트 실행
+    from acb.agent import DevAgent
+    agent = DevAgent(config=config, project_root=".")
+    state = agent.run(requirement)
+
+    sys.exit(0 if state.is_complete else 1)
+
+
+def _init_config(config):
+    """대화형 설정 초기화"""
+    console.print("\n[bold]에이전트 설정 초기화[/bold]\n")
+
+    config.project.language = console.input(
+        "[cyan]프로그래밍 언어[/cyan] (예: python): "
+    ).strip() or config.project.language
+
+    config.project.framework = console.input(
+        "[cyan]프레임워크[/cyan] (예: fastapi): "
+    ).strip() or config.project.framework
+
+    config.project.test_command = console.input(
+        "[cyan]테스트 명령어[/cyan] (예: pytest): "
+    ).strip() or config.project.test_command
+
+    config.project.lint_command = console.input(
+        "[cyan]린트 명령어[/cyan] (예: ruff check .): "
+    ).strip() or config.project.lint_command
+
+    config.project.build_command = console.input(
+        "[cyan]빌드 명령어[/cyan] (예: python -m build): "
+    ).strip() or config.project.build_command
+
+    config.project.deploy_command = console.input(
+        "[cyan]배포 명령어[/cyan] (비워두면 배포 건너뜀): "
+    ).strip() or config.project.deploy_command
+
+    config.base_branch = console.input(
+        "[cyan]기본 브랜치[/cyan] (기본: main): "
+    ).strip() or config.base_branch
 
 
 def prompt_task_name() -> str:
@@ -53,6 +141,13 @@ def handle_command(cmd: str, session: Session, store: SessionStore) -> bool:
         store.save(session)
         console.print("[dim]세션이 저장되었습니다. 안녕히 가세요![/dim]")
         sys.exit(0)
+
+    elif command == "auto":
+        if arg:
+            run_auto_mode(arg.split())
+        else:
+            console.print("[red]사용법: auto <요구사항>[/red]")
+        return False
 
     elif command == "help":
         show_help()
@@ -191,6 +286,11 @@ def handle_command(cmd: str, session: Session, store: SessionStore) -> bool:
 
 
 def main():
+    # 'auto' 서브커맨드 처리
+    if len(sys.argv) > 1 and sys.argv[1] == "auto":
+        run_auto_mode(sys.argv[2:])
+        return
+
     store = SessionStore()
 
     show_banner()
@@ -203,7 +303,7 @@ def main():
         console.print("[bold]저장된 세션이 있습니다:[/bold]")
         for i, name in enumerate(sessions):
             console.print(f"  [{i}] {name}")
-        console.print(f"  [N] 새 세션 시작")
+        console.print("  [N] 새 세션 시작")
         console.print()
 
         choice = console.input("[bold cyan]선택 > [/bold cyan]").strip()
